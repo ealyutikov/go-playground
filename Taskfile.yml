@@ -1,0 +1,16 @@
+version: '3'
+
+tasks:
+  build:
+    cmds:
+      - go build -v -i main.go
+  run:
+    cmds:
+      - go run main.go
+  redis:
+    cmds:
+      - docker run --rm --name blockchain-redis -d redis 
+  lint:
+    #https://freshman.tech/linting-golang
+    cmds:
+      - golangci-lint run
