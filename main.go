@@ -14,7 +14,7 @@ func main() {
 	chain.AddBlock("third block")
 
 	for _, block := range chain.Blocks {
-		fmt.Printf("Previos hash: %x\n", block.PreviosHash)
+		fmt.Printf("Previous hash: %x\n", block.PreviosHash)
 		fmt.Printf("Hash: %x\n", block.Hash)
 		fmt.Printf("Data: %x\n", block.Data)
 		fmt.Println()

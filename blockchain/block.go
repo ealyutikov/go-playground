@@ -24,7 +24,7 @@ func CreateBlock(data string, prevHash []byte) *Block {
 	pow := NewProof(block)
 	nouce, hash := pow.Run()
 
-	block.Hash = hash[:]
+	block.Hash = hash
 	block.Nouce = nouce
 
 	return block
@@ -46,9 +46,10 @@ func (b *Block) Serialize() []byte {
 
 func Deserialize(data []byte) *Block {
 	var block Block
-	decoder := gob.NewDecoder(bytes.NewReader(data))
 
+	decoder := gob.NewDecoder(bytes.NewReader(data))
 	err := decoder.Decode(&block)
+
 	Handle(err)
 
 	return &block

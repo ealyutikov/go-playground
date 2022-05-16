@@ -11,6 +11,7 @@ import (
 )
 
 const Difficulty = 12
+const HashLenght = 256
 
 type ProofOfWork struct {
 	Block  *Block
@@ -19,6 +20,7 @@ type ProofOfWork struct {
 
 func (pow *ProofOfWork) Run() (int, []byte) {
 	var intHash big.Int
+
 	var hash [32]byte
 
 	nounce := 0
@@ -43,7 +45,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 func NewProof(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
-	target.Lsh(target, uint(256-Difficulty))
+	target.Lsh(target, uint(HashLenght-Difficulty))
 
 	return &ProofOfWork{
 		Block:  b,
@@ -77,8 +79,10 @@ func (pow *ProofOfWork) Validate() bool {
 func ToHex(num int64) []byte {
 	buff := new(bytes.Buffer)
 	err := binary.Write(buff, binary.BigEndian, num)
+
 	if err != nil {
 		log.Panic(err)
 	}
+
 	return buff.Bytes()
 }
