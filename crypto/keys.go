@@ -38,12 +38,21 @@ type PublicKey struct {
 	key ed25519.PublicKey
 }
 
+func PublicKeyFromBytes(b []byte) *PublicKey {
+	if len(b) != ed25519.PublicKeySize {
+		panic("invalid public key length")
+	}
+	return &PublicKey{
+		key: ed25519.PublicKey(b),
+	}
+}
+
 func (p *PublicKey) Bytes() []byte {
 	return p.key
 }
 
-func (p *PublicKey) Address() Address {
-	return Address{
+func (p *PublicKey) Address() *Address {
+	return &Address{
 		value: p.key[len(p.key)-addressLen:],
 	}
 }
@@ -83,6 +92,15 @@ type Signature struct {
 	value []byte
 }
 
+func SignatureFromBytes(b []byte) *Signature {
+	if len(b) != ed25519.SignatureSize {
+		panic("length of the bytes not equal to 64")
+	}
+	return &Signature{
+		value: b,
+	}
+}
+
 func (s *Signature) Bytes() []byte {
 	return s.value
 }
@@ -99,6 +117,6 @@ func (a *Address) String() string {
 	return hex.EncodeToString(a.value)
 }
 
-func (a *Address) Bytes() string {
-	return string(a.value)
+func (a *Address) Bytes() []byte {
+	return a.value
 }
