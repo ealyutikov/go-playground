@@ -10,6 +10,8 @@ service Node {
 message Version {
 	string version = 1;
 	int32 height = 2;
+
+	string listenAddr = 3;
 }
 
 message Ack {}
@@ -19,7 +21,7 @@ message Block {
 	repeated Transaction transactions = 2;
  }
 
- message Header {
+message Header {
 	int32 version = 1;
 	int32 height = 2;
 	bytes prevHash = 3;

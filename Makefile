@@ -2,7 +2,7 @@ build:
 	@go build -o bin/goblockchain
 
 run: build
-	@./bin/docker
+	@./bin/goblockchain
 
 test:
 	@go test -v ./...
