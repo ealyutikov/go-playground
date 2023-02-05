@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/elyutikov/goblockchain/node"
 	"github.com/elyutikov/goblockchain/proto"
@@ -11,31 +12,17 @@ import (
 
 func main() {
 	makeNode(":3000", []string{})
-	makeNode(":4000", []string{})
+	time.Sleep(time.Second)
+	makeNode(":4000", []string{":3000"})
+	time.Sleep(time.Second)
+	makeNode(":5000", []string{":4000"})
 
 	select {}
-
-	// node := node.NewNode()
-
-	// go func() {
-	// 	for {
-	// 		time.Sleep(2 * time.Second)
-	// 		makeTransaction()
-	// 	}
-	// }()
-
-	// log.Fatal(node.Start(":3000"))
 }
 
 func makeNode(address string, bootstrapNodes []string) *node.Node {
 	n := node.NewNode()
-	go n.Start(address)
-
-	if len(bootstrapNodes) > 0 {
-		if err := n.BootstrapNetwork(bootstrapNodes); err != nil {
-			log.Fatal(err)
-		}
-	}
+	go n.Start(address, bootstrapNodes)
 	return n
 }
 
