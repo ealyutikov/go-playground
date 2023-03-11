@@ -11,7 +11,7 @@ import (
 
 func RandomHash() []byte {
 	hash := make([]byte, 32)
-	io.ReadFull(randc.Reader, hash)
+	_, _ = io.ReadFull(randc.Reader, hash)
 	return hash
 }
 
