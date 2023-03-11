@@ -2,35 +2,47 @@ package node
 
 import (
 	"context"
-	"log"
+	"encoding/hex"
 	"net"
 	"sync"
+	"time"
 
+	"github.com/elyutikov/goblockchain/crypto"
 	"github.com/elyutikov/goblockchain/proto"
+	"github.com/elyutikov/goblockchain/types"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 )
 
+const blockTime = 5 * time.Second
+
+type ServerConfig struct {
+	Version    string
+	ListenAddr string
+	PrivateKey *crypto.PrivateKey
+}
+
 type Node struct {
-	version    string
-	listenAddr string
-	logger     *zap.SugaredLogger
+	ServerConfig
+	logger *zap.SugaredLogger
 
 	peerLock sync.RWMutex
 	peers    map[proto.NodeClient]*proto.Version
+	mempool  *Mempool
 
 	proto.UnimplementedNodeServer
 }
 
-func NewNode() *Node {
+func NewNode(config ServerConfig) *Node {
 	loggerConfig := zap.NewDevelopmentConfig()
 	loggerConfig.EncoderConfig.TimeKey = ""
 	logger, _ := loggerConfig.Build()
 	return &Node{
-		peers:   make(map[proto.NodeClient]*proto.Version),
-		version: "blcoker-0.1",
-		logger:  logger.Sugar(),
+		peers:        make(map[proto.NodeClient]*proto.Version),
+		logger:       logger.Sugar(),
+		mempool:      NewMempool(),
+		ServerConfig: config,
 	}
 }
 
@@ -49,7 +61,7 @@ func (n *Node) addPeer(c proto.NodeClient, v *proto.Version) {
 	}
 
 	n.logger.Debugw("new peer successfully connected",
-		"we", n.listenAddr,
+		"we", n.ListenAddr,
 		"remote", v.ListenAddr,
 		"height", v.Height)
 }
@@ -65,7 +77,7 @@ func (n *Node) bootstrapNetwork(addrs []string) error {
 		if !n.canConnectWith(a) {
 			continue
 		}
-		n.logger.Debugf("dialing remote node", "we", n.listenAddr, "remote", a)
+		n.logger.Debugf("dialing remote node", "we", n.ListenAddr, "remote", a)
 		c, v, err := n.dialRemoteNode(a)
 		if err != nil {
 			return err
@@ -76,7 +88,7 @@ func (n *Node) bootstrapNetwork(addrs []string) error {
 }
 
 func (n *Node) Start(address string, bootstrapNodes []string) error {
-	n.listenAddr = address
+	n.ListenAddr = address
 	opts := []grpc.ServerOption{}
 	server := grpc.NewServer(opts...)
 
@@ -87,12 +99,16 @@ func (n *Node) Start(address string, bootstrapNodes []string) error {
 
 	proto.RegisterNodeServer(server, n)
 
-	n.logger.Infow("node started...", "port", n.listenAddr)
+	n.logger.Infow("node started...", "port", n.ListenAddr)
 
 	// bootstrap the network with a list of already known nodes
 	// in the network
 	if len(bootstrapNodes) > 0 {
 		go n.bootstrapNetwork(bootstrapNodes)
+	}
+
+	if n.PrivateKey != nil {
+		go n.validateLoop()
 	}
 
 	return server.Serve(ln)
@@ -111,15 +127,52 @@ func (n *Node) Handshake(ctx context.Context, v *proto.Version) (*proto.Version,
 
 func (n *Node) HandleTransaction(ctx context.Context, tx *proto.Transaction) (*proto.Ack, error) {
 	peer, _ := peer.FromContext(ctx)
-	log.Println("recieved tx from:", peer)
+	hash := hex.EncodeToString(types.HashTransaction(tx))
+
+	if n.mempool.Add(tx) {
+		n.logger.Debugw("received tx", "from", peer.Addr, "hash", hash, "we", n.ListenAddr)
+		go func() {
+			err := n.broadcast(tx)
+			if err != nil {
+				n.logger.Errorw("broadcast error", "err", err)
+			}
+		}()
+	}
+
 	return &proto.Ack{}, nil
+}
+
+func (n *Node) validateLoop() {
+	n.logger.Infow("starting validating loop", "pubkey", n.PrivateKey.Public(), "blockTime", blockTime)
+	ticker := time.NewTicker(blockTime)
+	for {
+		<-ticker.C
+		n.logger.Debugw("time to create new block", "lenTx", len(n.mempool.txx))
+
+		for hash := range n.mempool.txx {
+			delete(n.mempool.txx, hash)
+		}
+	}
+}
+
+func (n *Node) broadcast(msg any) error {
+	for peer := range n.peers {
+		switch v := msg.(type) {
+		case *proto.Transaction:
+			_, err := peer.HandleTransaction(context.Background(), v)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
 
 func (n *Node) getVersion() *proto.Version {
 	return &proto.Version{
 		Version:    "goblockchain-0.1",
 		Height:     0,
-		ListenAddr: n.listenAddr,
+		ListenAddr: n.ListenAddr,
 		PeerList:   n.getPeerList(),
 	}
 }
@@ -150,7 +203,7 @@ func (n *Node) dialRemoteNode(addr string) (proto.NodeClient, *proto.Version, er
 }
 
 func (n *Node) canConnectWith(addr string) bool {
-	if n.listenAddr == addr {
+	if n.ListenAddr == addr {
 		return false
 	}
 
