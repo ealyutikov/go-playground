@@ -147,11 +147,9 @@ func (n *Node) validateLoop() {
 	ticker := time.NewTicker(blockTime)
 	for {
 		<-ticker.C
-		n.logger.Debugw("time to create new block", "lenTx", len(n.mempool.txx))
 
-		for hash := range n.mempool.txx {
-			delete(n.mempool.txx, hash)
-		}
+		txx := n.mempool.Clear()
+		n.logger.Debugw("time to create new block", "lenTx", len(txx))
 	}
 }
 
@@ -170,7 +168,7 @@ func (n *Node) broadcast(msg any) error {
 
 func (n *Node) getVersion() *proto.Version {
 	return &proto.Version{
-		Version:    "goblockchain-0.1",
+		Version:    "glockchain-0.1",
 		Height:     0,
 		ListenAddr: n.ListenAddr,
 		PeerList:   n.getPeerList(),

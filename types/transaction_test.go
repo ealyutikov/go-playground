@@ -35,9 +35,9 @@ func TestNewTransaction(t *testing.T) {
 	}
 
 	tx := &proto.Transaction{
-		Verrsion: 1,
-		Inputs:   []*proto.TxInput{input},
-		Outputs:  []*proto.TxOutput{output1, output2},
+		Version: 1,
+		Inputs:  []*proto.TxInput{input},
+		Outputs: []*proto.TxOutput{output1, output2},
 	}
 
 	sig := SignTransaction(fromPrivKey, tx)

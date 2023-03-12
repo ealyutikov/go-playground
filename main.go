@@ -19,9 +19,10 @@ func main() {
 	time.Sleep(time.Second)
 	makeNode(":5000", []string{":4000"}, false)
 
-	time.Sleep(time.Second)
-	makeTransaction()
-
+	for {
+		time.Sleep(100 * time.Millisecond)
+		makeTransaction()
+	}
 	select {}
 }
 
