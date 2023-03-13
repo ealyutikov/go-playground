@@ -128,3 +128,12 @@ func (a *Address) String() string {
 func (a *Address) Bytes() []byte {
 	return a.value
 }
+
+func AddressFromBytes(b []byte) *Address {
+	if len(b) != addressLen {
+		panic("length of the address not equal to 20")
+	}
+	return &Address{
+		value: b,
+	}
+}

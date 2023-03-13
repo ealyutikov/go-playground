@@ -2,6 +2,7 @@ package node
 
 import (
 	"encoding/hex"
+	"fmt"
 	"testing"
 
 	"github.com/elyutikov/goblockchain/crypto"
@@ -23,14 +24,14 @@ func randomBlock(t *testing.T, chain *Chain) *proto.Block {
 }
 
 func TestNewChain(t *testing.T) {
-	chain := NewChain(NewMemoryBlockStore(), NewMemoryTxStore())
+	chain := NewChain(NewMemoryBlockStore(), NewMemoryTxStore(), NewMemoryUTXOStore())
 	assert.Equal(t, 0, chain.Height())
 	_, err := chain.GetBlockByHeight(0)
 	assert.Nil(t, err)
 }
 
 func TestChainHeight(t *testing.T) {
-	chain := NewChain(NewMemoryBlockStore(), NewMemoryTxStore())
+	chain := NewChain(NewMemoryBlockStore(), NewMemoryTxStore(), NewMemoryUTXOStore())
 
 	for i := 0; i < 100; i++ {
 		b := randomBlock(t, chain)
@@ -40,7 +41,7 @@ func TestChainHeight(t *testing.T) {
 }
 
 func TestAddBlock(t *testing.T) {
-	chain := NewChain(NewMemoryBlockStore(), NewMemoryTxStore())
+	chain := NewChain(NewMemoryBlockStore(), NewMemoryTxStore(), NewMemoryUTXOStore())
 
 	for i := 0; i < 100; i++ {
 		block := randomBlock(t, chain)
@@ -60,7 +61,7 @@ func TestAddBlock(t *testing.T) {
 
 func TestAddBlockWithTx(t *testing.T) {
 	var (
-		chain     = NewChain(NewMemoryBlockStore(), NewMemoryTxStore())
+		chain     = NewChain(NewMemoryBlockStore(), NewMemoryTxStore(), NewMemoryUTXOStore())
 		block     = randomBlock(t, chain)
 		privKey   = crypto.NewPrivateKeyFromSeedStr(goodSeed)
 		recipient = privKey.Public().Address().Bytes()
@@ -92,6 +93,9 @@ func TestAddBlockWithTx(t *testing.T) {
 		Outputs: outputs,
 	}
 
+	sig := types.SignTransaction(privKey, tx)
+	tx.Inputs[0].Signature = sig.Bytes()
+
 	block.Transactions = append(block.Transactions, tx)
 	require.Nil(t, chain.AddBlock(block))
 	txHash := hex.EncodeToString(types.HashTransaction(tx))
@@ -99,4 +103,11 @@ func TestAddBlockWithTx(t *testing.T) {
 	fetchedTx, err := chain.txStore.Get(txHash)
 	assert.Nil(t, err)
 	assert.Equal(t, tx, fetchedTx)
+
+	address := crypto.AddressFromBytes(tx.Outputs[0].Address)
+	key := fmt.Sprintf("%s_%s", address, txHash)
+	utxo, err := chain.utxoStore.Get(key)
+	assert.Nil(t, err)
+
+	fmt.Println(utxo)
 }

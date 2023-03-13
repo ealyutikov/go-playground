@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-option go_package = "github.com/elyutikov/goblockchain/proto";
+option go_package = "github.com/elyutikov/glockchain/proto";
 
 service Node {
 	rpc Handshake(Version) returns (Version);
