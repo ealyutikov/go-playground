@@ -10,6 +10,8 @@ import (
 	"github.com/elyutikov/goblockchain/types"
 )
 
+const goodSeed = "535a86e30920723b4f0f176d2f69456a20bba38aa179675108be3971b9736fc3"
+
 type HeaderList struct {
 	headers []*proto.Header
 }
@@ -38,12 +40,17 @@ func (list *HeaderList) Len() int {
 }
 
 type Chain struct {
-	store   BlockStore
-	headers *HeaderList
+	blockStore BlockStore
+	txStore    TxStore
+	headers    *HeaderList
 }
 
-func NewChain(bs BlockStore) *Chain {
-	chain := &Chain{store: bs, headers: NewHeaderList()}
+func NewChain(bs BlockStore, tx TxStore) *Chain {
+	chain := &Chain{
+		blockStore: bs,
+		txStore:    tx,
+		headers:    NewHeaderList(),
+	}
 	chain.addBlock(createGenesisBlock())
 	return chain
 }
@@ -61,12 +68,20 @@ func (c *Chain) AddBlock(b *proto.Block) error {
 
 func (c *Chain) addBlock(b *proto.Block) error {
 	c.headers.Add(b.Header)
-	return c.store.Put(b)
+
+	for _, tx := range b.Transactions {
+		fmt.Println("NEW TX: ", hex.EncodeToString(types.HashTransaction(tx)))
+		if err := c.txStore.Put(tx); err != nil {
+			return err
+		}
+	}
+
+	return c.blockStore.Put(b)
 }
 
 func (c *Chain) GetBlockByHash(hash []byte) (*proto.Block, error) {
 	hashHex := hex.EncodeToString(hash)
-	return c.store.Get(hashHex)
+	return c.blockStore.Get(hashHex)
 }
 
 func (c *Chain) GetBlockByHeight(height int) (*proto.Block, error) {
@@ -97,12 +112,24 @@ func (c *Chain) ValidateBlock(b *proto.Block) error {
 }
 
 func createGenesisBlock() *proto.Block {
-	privKey := crypto.GeneratePrivateKey()
+	privKey := crypto.NewPrivateKeyFromSeedStr(goodSeed)
 	block := &proto.Block{
 		Header: &proto.Header{
 			Version: 1,
 		},
 	}
+
+	tx := &proto.Transaction{
+		Version: 1,
+		Inputs:  []*proto.TxInput{},
+		Outputs: []*proto.TxOutput{
+			{
+				Amount:  1000,
+				Address: privKey.Public().Address().Bytes(),
+			},
+		},
+	}
+	block.Transactions = append(block.Transactions, tx)
 	types.SignBlock(privKey, block)
 	return block
 }

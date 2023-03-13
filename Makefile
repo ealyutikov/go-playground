@@ -1,5 +1,5 @@
 build:
-	@go build -o bin/goblockchain
+	@go build -o bin/glockchain
 
 run: build
 	@./bin/goblockchain

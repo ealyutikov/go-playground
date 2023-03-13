@@ -57,6 +57,14 @@ func (p *PublicKey) Address() *Address {
 	}
 }
 
+func NewPrivateKeyFromSeedStr(seed string) *PrivateKey {
+	seedBytes, err := hex.DecodeString(seed)
+	if err != nil {
+		panic(err)
+	}
+	return NewPrivateKeyFromSeed(seedBytes)
+}
+
 func NewPrivateKeyFromString(s string) *PrivateKey {
 	seed, err := hex.DecodeString(s)
 	if err != nil {
@@ -68,7 +76,7 @@ func NewPrivateKeyFromString(s string) *PrivateKey {
 
 func NewPrivateKeyFromSeed(seed []byte) *PrivateKey {
 	if len(seed) != ed25519.SeedSize {
-		panic("invalid seed lenght, must be 32")
+		panic("invalid seed length, must be 32")
 	}
 
 	return &PrivateKey{
