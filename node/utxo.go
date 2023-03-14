@@ -13,7 +13,7 @@ type UTXO struct {
 }
 
 type UTXOStore interface {
-	Put(string, *UTXO) error
+	Put(*UTXO) error
 	Get(string) (*UTXO, error)
 }
 
@@ -28,10 +28,11 @@ func NewMemoryUTXOStore() *MemoryUTXOStore {
 	}
 }
 
-func (store *MemoryUTXOStore) Put(key string, utxo *UTXO) error {
+func (store *MemoryUTXOStore) Put(utxo *UTXO) error {
 	store.lock.Lock()
 	defer store.lock.Unlock()
 
+	key := fmt.Sprintf("%s_%d", utxo.Hash, utxo.OutIndex)
 	store.data[key] = utxo
 	return nil
 }
