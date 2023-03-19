@@ -44,7 +44,7 @@ func (pool *Mempool) Has(tx *proto.Transaction) bool {
 	defer pool.lock.RUnlock()
 
 	hash := hex.EncodeToString(types.HashTransaction(tx))
-	tx, ok := pool.txx[hash]
+	_, ok := pool.txx[hash]
 	return ok
 }
 

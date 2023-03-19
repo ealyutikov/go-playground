@@ -8,7 +8,7 @@ import (
 
 func RandomDurationMS(maxMS int) time.Duration {
 	minMS := 1
-	r := (rand.Intn(maxMS-minMS) + minMS)
+	r := rand.Intn(maxMS-minMS) + minMS
 
 	return time.Duration(r) * time.Millisecond
 }
