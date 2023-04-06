@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package demo_service;
+
+option go_package = "github.com/elyutikov/go-playground/grpc-demo/demo_service";
+
+service DemoService {
+  rpc Do(Request) returns (Response) {}
+}
+
+message Request {
+  string message = 1;
+}
+
+message Response {
+  string message = 1;
+}
