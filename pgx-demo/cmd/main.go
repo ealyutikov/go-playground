@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/elyutikov/pgx-demo/services"
 	"github.com/jackc/pgx/v5"
@@ -29,12 +30,17 @@ func main() {
 }
 
 func newSQLDB(connectionString string) (*sql.DB, error) {
-	pgConfig, err := pgx.ParseConfig(connectionString)
+	config, err := pgx.ParseConfig(connectionString)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse postgres connection string: %w", err)
 	}
 
-	db := stdlib.OpenDB(*pgConfig)
+	db := stdlib.OpenDB(*config)
+	db.SetMaxOpenConns(3)
+	db.SetMaxIdleConns(3)
+	db.SetConnMaxLifetime(3 * time.Minute)
+	db.SetConnMaxIdleTime(3 * time.Minute)
+
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("unable to connect to postgres: %w", err)
 	}
