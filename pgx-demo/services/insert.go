@@ -18,7 +18,10 @@ func InsertDemo(sqldb *sql.DB) error {
 	uRepo := repo.NewUserRepo(dbtx)
 	oRepo := repo.NewOutboxRepo(dbtx)
 
-	tx := transactor.NewTxManager(sqldb, zap.NewNop())
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	tx := transactor.NewTxManager(sqldb, logger)
 	uService := NewUserService(tx, uRepo, oRepo)
 
 	user := domain.User{

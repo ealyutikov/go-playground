@@ -10,7 +10,6 @@ import (
 	"go.uber.org/zap"
 )
 
-// Manager wraps default sql.Tx
 type Manager interface {
 	// Process starts a new transaction, processes txFunc and
 	// if txFunc returns error, then tries to rollback the transaction
