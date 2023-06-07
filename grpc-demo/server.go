@@ -8,6 +8,8 @@ import (
 
 	demo_service "github.com/elyutikov/grpc-demo/proto"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -35,6 +37,17 @@ func (s *demoServer) Do(ctx context.Context, req *demo_service.Request) (*demo_s
 	log.Printf("start Do(%s)\n", req.String())
 	defer log.Printf("end Do(%s)\n", req.String())
 
-	time.Sleep(5 * time.Second)
-	return &demo_service.Response{Message: "success"}, nil
+	md, _ := metadata.FromIncomingContext(ctx)
+	log.Printf("metadata(%+v)\n", md)
+
+	time.Sleep(1 * time.Second)
+
+	header := metadata.Pairs("header-key-from-server", "val")
+	_ = grpc.SendHeader(ctx, header)
+
+	trailer := metadata.Pairs("trailer-key-from-server", "val")
+	_ = grpc.SetTrailer(ctx, trailer)
+
+	//return &demo_service.Response{Message: "success"}, nil
+	return nil, status.Error(999, "test")
 }
