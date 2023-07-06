@@ -43,7 +43,7 @@ func (s *demoServer) Do(ctx context.Context, req *demo_service.Request) (*demo_s
 	time.Sleep(1 * time.Second)
 
 	header := metadata.Pairs("header-key-from-server", "val")
-	_ = grpc.SendHeader(ctx, header)
+	_ = grpc.SetHeader(ctx, header)
 
 	trailer := metadata.Pairs("trailer-key-from-server", "val")
 	_ = grpc.SetTrailer(ctx, trailer)
