@@ -7,3 +7,5 @@ use ./grpc-demo
 use ./algorithms
 
 use ./glockchain
+
+use ./golden-signals
