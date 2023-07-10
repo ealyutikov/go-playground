@@ -31,3 +31,11 @@ func Test_suggestedProducts_2(t *testing.T) {
 		),
 	)
 }
+
+func Test_suggestedProducts_3(t *testing.T) {
+	assert.Equal(
+		t,
+		[][]string{},
+		suggestedProducts([]string{"havana"}, "tatiana"),
+	)
+}
