@@ -8,6 +8,8 @@ type TreeNode struct {
 	Right *TreeNode
 }
 
+const EmptyNode = "null"
+
 type Codec struct{}
 
 func Constructor() Codec {
@@ -16,7 +18,7 @@ func Constructor() Codec {
 
 func (this *Codec) serialize(root *TreeNode) string {
 	if root == nil {
-		return "[]"
+		return EmptyNode
 	}
 
 	bytes, _ := json.Marshal(root)
@@ -24,7 +26,7 @@ func (this *Codec) serialize(root *TreeNode) string {
 }
 
 func (this *Codec) deserialize(data string) *TreeNode {
-	if "[]" == data {
+	if EmptyNode == data {
 		return nil
 	}
 
